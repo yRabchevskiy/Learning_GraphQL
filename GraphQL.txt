@@ -1,0 +1,622 @@
+GraphQL
+
+GraphQL field types:
+    1) Склярні типи ( Int, Float, String, Boolean, ID )
+    2) Обєкти
+Schema field types:
+    1) Int, Float, String, Boolean, ID
+    2) Object (Custom Type)
+    3) користувацький скалярний тип (scalar DateTime)
+        - npm пакет graphql-custom-types - користувацькі скалярні типи
+    4) Enum - опреділена вибірка можливих варіантів (скалярний тип)
+    5) Списки
+        - списки можуть містити як дані одного типу, так і різних
+        - списки можуть містити користувацькі типи (union. interface)
+        - [Int] - список чисел     [CustomObjectType] - список користувацьких обєктів
+        
+        example:
+        - [Int]   - список цілих значень які можуть бути нульові
+        - [Int!]  - список цілих значень які не можуть бути нульові
+        - [Int]!  - ненульовий список цілих значень, які можуть бути нульовими
+        - [Int!]! - ненульовий список цілих значень, які не можуть бути нульовими
+    6) Union (обєднання)
+        union <union_name> = <type_name> | <type_name> | ...
+    7) Interface
+    8) Input - типи вводу (використовуюся для вхідних аргументів в мутаціях)
+Типи запитів:
+    - query - для отримання даних (GET)
+    - mutation - для створення, зміни, видалення даних (POST, PUT, DELETE)
+    - subscription - підписка на зміну даних на сервері
+
+    I        QUERY:
+        - для читання даних (GET)
+        - відповідь у вигляді JSON обєкта
+
+        examples:
+        1)  Single query
+            query <query_name?> {
+                <field_name> {
+                    <property_name>
+                    <property_name>
+                    <property_name>
+                    <property_name>
+                    ...
+                }
+            }
+        2)  Multiple query
+            query <query_name> {
+                <field_name> {
+                    <property_name>
+                    <property_name>
+                    ...
+                }
+                <field_name> {
+                    <property_name>
+                    ...
+                }
+            }
+
+            with CUSTOM responce fields name:
+                query <query_name> {
+                    <custom_field_res_name>: <field_name> {
+                        <custom_property_name>: <property_name>
+                        ...
+                    }
+                }
+        3) With arguments
+            query <query_name> {
+                <field_name_with_params>(<param_name>: <value>, ...) {
+                    <property_name>
+                    ...
+                }
+            }
+                            query activeUsers {
+                                allUsers(status: "ACTIVE" sortBy: "name") {
+                                    name
+                                    status
+                                }
+                            }
+
+            or
+
+            query <query_name> {
+                <type_name>(id: <value>) { ## res опреділеного типу 
+                    <property_name>
+                    ...
+                }
+            }
+                            query userById {
+                                User(id: "Yura") {
+                                    name
+                                    ...
+                                }
+                            }
+
+
+        Fragments:
+            - обєдює однакові поля
+
+            example:
+                fragment userInfo on User {
+                    name
+                    age
+                    ...
+                }
+
+                use:
+                    query {
+                        User(id: 'Yura') {
+                            ...userInfo
+                            friends {
+                                name
+                                ...
+                            }
+                        }
+                    }
+
+        Обєднання:
+            - дозволяє повертати в масиві різні типи обєктів
+
+            example:
+                query schedule {
+                    tasks {
+                        ...on Work {
+                            name
+                            task
+                            ...
+                        }
+                        ...on Study {
+                            name
+                            subject
+                            ...
+                        }
+                    }
+                }
+
+                or
+
+                query schedule {
+                    tasks {
+                        ...workTask
+                        ...studyTask
+                    }
+                }
+
+                fragment workTask on Work {
+                    name
+                    task
+                    ...
+                }
+
+                fragment studyTask on Study {
+                    name
+                    subject
+                    ...
+                }
+
+
+        Interface:
+            - для роботи з різними типами обєктів які можуть бути повернуті в одному полі
+
+    II      MUTATION:
+        - для зміни даних (POST, PUT, DELETE)
+
+        example:
+        1)  Delete example - return true or false
+            mutation removeAll {
+                removeAllData
+            }
+        
+        2) Create - return JSON => type User
+            mutation createUser {
+                addUser(name: 'Yura', age: 35, birthday: '27.10.2024' sex: 'Male', isAdmin: true) {
+                    id
+                    name
+                    age
+                    birthday
+                    isAdmin
+                }
+            }
+        3) Update
+            mutation updateUser {
+                setUserAge(id: 'Yura', age: 40) {
+                    name
+                    age
+                }
+            }
+
+
+
+        Змінні запитів:
+            - $variables
+
+            example:
+                mutation createUser($name:String! $age:Int $brDay:String!) {
+                    addSong(name:$name, age:$age, birthday:$brDay) {
+                        id
+                        name
+                        birthday
+                    }
+                }
+
+                параметри запиту:
+                {
+                    "name": "Yura",
+                    "age": 35,
+                    "brDay": "10.10.2024"
+                }
+
+    III       SUBSCRIPTION:
+
+    - дозволяє підписатися на зміну даних в реальному часі без потреби створювати запит для оновлення інформації в БД
+    - використовує WebSocket
+
+    example:
+        type Subscription {
+            userStatusChage: User!
+            onlyUserStatusActive(status: StatusType): User!
+        }
+
+        schema {
+            query: Query
+            mutation: Mutation
+            subscription: Subscription
+        }
+Інформацію про схему:
+    query {
+        __schema {
+            types {
+                name
+                description
+            }
+        }
+    }
+Інформація про визначений тип
+
+    query userDetails{
+        __type(name:"User") {
+            name
+            fields {
+                name
+                description
+                type {
+                    name
+                }
+            }
+        }
+    }
+Інформація про всі корневі типи:
+
+    query roots {
+        queryType {
+            ...fieldTypes
+        }
+        mutationType {
+            ...fieldTypes
+        }
+        subscriptionType {
+            ...fieldTypes
+        }
+    }
+
+    fragment fieldTypes on __Type {
+        name
+        fields {
+            name
+        }
+    }
+SCHEMA Сворення схеми на основі типів обєктів:
+    example: 
+        schema {
+            query: Query
+            mutation: Mutation
+        }
+    
+    I) Query:
+
+        - розширення файла .graphql
+        - <field_name>: String! - поле не може містити null (обовязкове поле!!!)
+        - <field_name>: String  - поле може містити null (необовязкове поле!!!)
+        
+        example:
+            query <query_name> {
+                <query_field_name> {
+                    <field_name>
+                    ...
+                }
+            }
+
+            schema `
+            
+                type Query {
+                    <query_field_name>: <type> (String, Int, Float,
+                                                Boolean, ID, <object_type>,
+                                                <scalar_type>, <list>,
+                                                <union_type>, <interface_type>)
+                }
+            
+            `
+
+        I) Звязок один - до - одного: (User -(postedBy)-> Photo)
+
+            scalar DateTime
+
+            enum PhotoCategory {
+                LANDING
+                PORTAL
+            }
+
+            type User {
+                id: ID!
+                name: String!
+                avatar: String
+            }
+
+            type Photo {
+                id: ID!
+                name: String!
+                created: DateTime!
+                category: PhotoCategory!
+                postedBy: User!
+            }
+        
+                                        (     -(postedBy)-> Photo)
+        II) Звязок один - до - багатьох: (User -(postedBy)-> Photo)
+                                        (     -(postedBy)-> Photo)
+
+            type User {
+                ...
+                postedPhotos: [Photo!]!
+            }
+        
+                                            (User <-(postedBy)-> Photo)
+        III) Звязок багато - до - багатьох: (User <-(postedBy)-> Photo)
+                                            (User <-(postedBy)-> Photo)
+
+            type User {
+                ...
+                inPhotos: [Photo!]! ## звязок один - до - багатьох
+            }
+
+            type Photo {
+                ...
+                taggedUsers: [User!]! ## звязок один - до - багатьох
+            }
+
+        IV) Прохідний вузол (звязує один вузол з іншими, ребро яке містить інформацію)
+        
+        type User {
+            friends: [FriendsShip!]!
+        }
+
+            type FriendsShip {
+                friend_a: User!
+                friend_b: User!
+                wereWeMet: String ## Location
+            }
+
+            or
+
+            type FriendsShip {
+                friends: [User!]!
+                wereWeMet: String ## Location
+            }
+
+       
+        Union:
+            - обєднання різних типів
+            example:
+                union AgendaItem = StudyTask | workTask
+
+                type StudyTask {
+                    name: String!
+                    subject: String
+                    ...
+                }
+
+                type WorkTask {
+                    name: String!
+                    houre: Int!
+                    ...
+                }
+
+                type DayTask {
+                    agenda: [AgendaItem!]!
+                }
+
+        Interface:
+            - абстрактний тип
+            - для гарантування що опреділені типи завжди повернуть певні поля
+            - для організації коду
+
+            example:
+                query schedule {
+                    agenda {
+                        name
+                        start
+                        end
+                        ... on workTask {
+                            reps
+                        }
+                    }
+                }
+
+                schema:
+                    scalar DateTime
+
+                    interface AgendaItem {
+                        name: String!
+                        start: DateTime!
+                        end: DateTime!
+                    }
+
+                    type StudyTask implements AgendaItem {
+                        name: String!
+                        start: DateTime!
+                        end: DateTime!
+                        topic: String!
+                        ...
+                    }
+
+                    type WorkTask implements AgendaItem {
+                        name: String!
+                        start: DateTime!
+                        end: DateTime!
+                        reps: Int!
+                    }
+
+                    type Query {
+                        agenda: [AgendaItem!]!
+                    }
+
+        Аргументи:
+        Input:
+            example:
+                input NewUserInput {
+                    name: String!
+                    age: Int!
+                    status: StatusType=ACTIVE
+                }
+                input DateRange {
+                    start: DateTime!
+                    end: DateTime!
+                }
+                input DataSort {
+                    sort: SortDirection = ASC
+                    sortBy: SortableFields = name
+                }
+                type Mutation {
+                    addUser(input: NewUserInput!): User!
+                }
+
+                schema {
+                    mutation newUser($input: NewUserInput!) {
+                        addUser(input: $input) {
+                            ## field that will be returned from server
+                            id
+                            name
+                            age
+                            created
+                        }
+                    }
+                }
+
+        I)
+            type Query {
+                ...
+                User(id: ID!): User! ## обовязковий аргумент
+                Photo(id: ID): Photo! ## не обовязковий аргумент
+            }
+
+            query {
+                User(id: 'string') {
+                    name
+                    ...
+                }
+                Photo(id: 'string') {
+                    name
+                    ...
+                }
+            }
+
+        II) фільтрація
+            schema:
+                enum StatusType {
+                    ACTIVE
+                    DEACTIVATED
+                }
+                
+                type Query {
+                    ...
+                    allUsers(status: StatusType): [User!]!
+                }
+            query:
+                query {
+                    allUsers(status: "ACTIVE") {
+                        name
+                        ...
+                    }
+                }
+        
+        III) Пайджінг
+            - кількість сторінок (pages = total / pageSize )
+            schema:
+                type Query {
+                    allUsers(first: Int=50 start: Int=0): [User!]!
+                }
+            query:
+                query {
+                    allUsers(first: 10 start: 100) {
+                        name
+                        ...
+                    }
+                }
+
+        IV) Сортування
+            schema:
+                enum SortDirection {
+                    ASC
+                    DSC
+                }
+
+                enum SortableFields {
+                    name
+                    created
+                    description
+                    ...
+                }
+
+                Query {
+                    allUsers(
+                        sort: SortDirection = ASC ## необовязковий аргумент
+                        sortBy: SortableFields = created ## необовязковий аргумент
+                    ): [User!]!
+                }
+
+            query:
+                query {
+                    allUsers(sortBy: created)
+                }
+        
+        V) All:
+        type User {
+            friends(
+                first: Int = 10
+                start: Int = 0
+                sort: SortDirection = ASC
+                sortBy: SortableFields = name
+                status: StatusType
+            ): [User!]
+        }
+    
+    II) Mutation:
+
+        example:
+            type Mutation {
+                addUser(
+                    name: String!
+                    status: StatusType=ACTIVE ## дефолтне значення ACTIVE 
+                ): User!
+            }
+
+            mutation addUser(
+                $name: String!
+                $age: Int!
+                $status: StatusType
+                ) {
+                addUser(
+                    name: $name
+                    age: $age
+                    status: $status) {
+                        ## fields that will be returned from the server
+                        id    ## generated on Server
+                        created ## generated on Server
+                        name
+                }
+            }
+    III) Subscription
+
+        example:
+            type Subscription {
+                newUser: User!
+            }
+            subscription {
+                newUser(status: StatusType=ACTIVE) {
+                    id
+                    name
+                    ...
+                }
+            }
+Коментарі:
+    """
+    User who has been autorized
+    """
+    type User {
+        id: ID!
+        """
+        The first and last user name
+        """
+        name: String!
+        ...
+    }
+
+
+СТВОРЕННЯ РОБОЧОГО ПРОЕКТУ:
+    I) TYPES
+        const typeDefs = `
+            type Query {
+                <query_name>: type
+            }
+            type Mutation {
+                <mutation_name>: type
+            }
+            type Subscription {
+                <subscription_name>: type
+            }
+        `
+    II) RESOLVERS
+        const resolvers = {
+            Query: {
+                <query_name>: () => <returned_value>
+            }
+        }
