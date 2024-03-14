@@ -619,4 +619,21 @@ SCHEMA Сворення схеми на основі типів обєктів:
             Query: {
                 <query_name>: () => <returned_value>
             }
+
+            Mutation: {
+                addUser(parent, args) {
+                    let user = {
+                        id: _id++,
+                        ...args
+                    }
+                    users.push(user);
+                    return user; ## return не обовязково
+                }
+            }
+            /**
+            * Тривіальний розпізнавач
+            * Photo: {
+            *  url: parent => `http://somesite.com/img/${parent.id}.jpg`
+            * }
+            */
         }
